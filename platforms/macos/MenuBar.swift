@@ -176,17 +176,16 @@ class MenuBarController {
 
     private func showOnboarding() {
         if onboardingWindow == nil {
-            let controller = NSHostingController(rootView: OnboardingView())
-            let window = NSWindow(contentViewController: controller)
-            window.title = AppMetadata.name
-            window.styleMask = [.titled, .closable]
-            window.setContentSize(NSSize(width: 480, height: 400))
-            window.center()
-            window.isReleasedWhenClosed = false
-            onboardingWindow = window
+            let view = OnboardingView()
+            let controller = NSHostingController(rootView: view)
+            onboardingWindow = NSWindow(contentViewController: controller)
+            onboardingWindow?.title = AppMetadata.name
+            onboardingWindow?.styleMask = [.titled, .closable]
+            onboardingWindow?.setContentSize(controller.view.fittingSize)
+            onboardingWindow?.center()
         }
-        NSApp.activate(ignoringOtherApps: true)
         onboardingWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func showAbout() {

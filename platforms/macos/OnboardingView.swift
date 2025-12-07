@@ -175,6 +175,7 @@ struct PermissionStep: View {
 
     @State private var hasRequestedPermission = false
     @State private var showRestartPrompt = false
+    @State private var permissionTimer: Timer?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -260,19 +261,35 @@ struct PermissionStep: View {
                 }
             }
 
-            // Skip hint for granted
-            if status != .granted {
-                Button("Kiểm tra lại") {
-                    recheckPermission()
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.accentColor)
-                .padding(.top, 8)
-            }
-
             Spacer().frame(height: 30)
         }
         .padding(30)
+        .onAppear {
+            startAutoCheck()
+        }
+        .onDisappear {
+            stopAutoCheck()
+        }
+    }
+
+    private func startAutoCheck() {
+        // Auto-check permission every 1 second
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            let trusted = AXIsProcessTrusted()
+            DispatchQueue.main.async {
+                if trusted {
+                    status = .granted
+                    stopAutoCheck()
+                } else if hasRequestedPermission {
+                    status = .needsRestart
+                }
+            }
+        }
+    }
+
+    private func stopAutoCheck() {
+        permissionTimer?.invalidate()
+        permissionTimer = nil
     }
 
     private var titleText: String {
@@ -311,19 +328,6 @@ struct PermissionStep: View {
         // Open Accessibility settings (not Input Monitoring)
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func recheckPermission() {
-        isChecking = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let trusted = AXIsProcessTrusted()
-            if trusted {
-                status = .granted
-            } else if hasRequestedPermission {
-                status = .needsRestart
-            }
-            isChecking = false
         }
     }
 }

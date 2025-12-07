@@ -9,44 +9,40 @@ struct OnboardingView: View {
     @State private var selectedMode: InputMode = .telex
     @State private var permissionTimer: Timer?
 
-    // Check if user already went through permission flow (opened settings before restart)
-    private var isPostRestart: Bool {
+    // Đã restart sau khi cấp quyền chưa?
+    private var didRestartAfterPermission: Bool {
         UserDefaults.standard.bool(forKey: SettingsKey.permissionGranted)
     }
 
-    // Show success flow if: has permission AND is after restart
-    private var showSuccessFlow: Bool {
-        hasPermission && isPostRestart
+    // Nếu đã restart và có quyền -> bắt đầu từ Setup page
+    private var initialPage: Int {
+        (didRestartAfterPermission && hasPermission) ? 2 : 0
     }
-
-    private var totalPages: Int { showSuccessFlow ? 2 : 3 }
 
     var body: some View {
         VStack(spacing: 0) {
             // Content area
             Group {
-                if showSuccessFlow {
-                    // Post-restart flow: Success -> Setup
-                    if currentPage == 0 {
+                switch currentPage {
+                case 0:
+                    WelcomePage()
+                case 1:
+                    PermissionPage(
+                        hasPermission: hasPermission,
+                        didOpenSettings: didOpenSettings
+                    )
+                case 2:
+                    if didRestartAfterPermission {
+                        // Sau khi restart: hiện success rồi setup
                         PermissionSuccessPage()
                     } else {
+                        // Flow bình thường (không nên đến đây)
                         SetupPage(selectedMode: $selectedMode)
                     }
-                } else {
-                    // Normal flow: Welcome -> Permission -> Setup
-                    switch currentPage {
-                    case 0:
-                        WelcomePage()
-                    case 1:
-                        PermissionPage(
-                            hasPermission: hasPermission,
-                            didOpenSettings: didOpenSettings
-                        )
-                    case 2:
-                        SetupPage(selectedMode: $selectedMode)
-                    default:
-                        EmptyView()
-                    }
+                case 3:
+                    SetupPage(selectedMode: $selectedMode)
+                default:
+                    EmptyView()
                 }
             }
             .frame(height: 340)
@@ -55,18 +51,14 @@ struct OnboardingView: View {
 
             // Bottom bar
             HStack {
-                HStack(spacing: 8) {
-                    ForEach(0..<totalPages, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentPage ? Color.accentColor : Color.secondary.opacity(0.3))
-                            .frame(width: 6, height: 6)
-                    }
-                }
+                // Page indicators
+                pageIndicators
 
                 Spacer()
 
+                // Buttons
                 HStack(spacing: 12) {
-                    if currentPage > 0 {
+                    if currentPage > 0 && currentPage < 2 {
                         Button("Quay lại") {
                             currentPage -= 1
                         }
@@ -78,17 +70,59 @@ struct OnboardingView: View {
             .padding(.vertical, 14)
         }
         .frame(width: 480)
-        .onAppear { startPermissionCheck() }
+        .onAppear {
+            startPermissionCheck()
+            // Nếu đã restart sau khi cấp quyền -> nhảy đến page 2
+            if didRestartAfterPermission && AXIsProcessTrusted() {
+                currentPage = 2
+            }
+        }
         .onDisappear { stopPermissionCheck() }
     }
 
     @ViewBuilder
+    private var pageIndicators: some View {
+        let totalPages = didRestartAfterPermission ? 2 : 3
+        let displayPage = didRestartAfterPermission ? (currentPage - 2) : currentPage
+
+        HStack(spacing: 8) {
+            ForEach(0..<totalPages, id: \.self) { index in
+                Circle()
+                    .fill(index == displayPage ? Color.accentColor : Color.secondary.opacity(0.3))
+                    .frame(width: 6, height: 6)
+            }
+        }
+    }
+
+    @ViewBuilder
     private var primaryButton: some View {
-        if showSuccessFlow {
-            // Post-restart flow
-            if currentPage == 0 {
+        switch currentPage {
+        case 0:
+            Button("Tiếp tục") {
+                currentPage = 1
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+
+        case 1:
+            if hasPermission {
+                Button("Khởi động lại") {
+                    restartApp()
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+            } else {
+                Button("Mở System Settings") {
+                    openAccessibilitySettings()
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+            }
+
+        case 2:
+            if didRestartAfterPermission {
                 Button("Tiếp tục") {
-                    currentPage = 1
+                    currentPage = 3
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
@@ -99,41 +133,16 @@ struct OnboardingView: View {
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
             }
-        } else {
-            // Normal flow
-            switch currentPage {
-            case 0:
-                Button("Tiếp tục") {
-                    currentPage = 1
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
 
-            case 1:
-                if hasPermission {
-                    Button("Khởi động lại") {
-                        restartApp()
-                    }
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-                } else {
-                    Button("Mở System Settings") {
-                        openAccessibilitySettings()
-                    }
-                    .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
-                }
-
-            case 2:
-                Button("Hoàn tất") {
-                    finishOnboarding()
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(.borderedProminent)
-
-            default:
-                EmptyView()
+        case 3:
+            Button("Hoàn tất") {
+                finishOnboarding()
             }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+
+        default:
+            EmptyView()
         }
     }
 
@@ -160,6 +169,8 @@ struct OnboardingView: View {
     private func finishOnboarding() {
         UserDefaults.standard.set(selectedMode.rawValue, forKey: SettingsKey.method)
         UserDefaults.standard.set(true, forKey: SettingsKey.hasCompletedOnboarding)
+        // Clear permission flag
+        UserDefaults.standard.removeObject(forKey: SettingsKey.permissionGranted)
         NotificationCenter.default.post(name: .onboardingCompleted, object: nil)
         NSApp.keyWindow?.close()
     }

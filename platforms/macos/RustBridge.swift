@@ -4,6 +4,7 @@ import AppKit
 
 // MARK: - Debug Logging
 
+#if DEBUG
 func debugLog(_ message: String) {
     let timestamp = ISO8601DateFormatter().string(from: Date())
     let logMessage = "[\(timestamp)] \(message)\n"
@@ -13,12 +14,18 @@ func debugLog(_ message: String) {
     let logPath = "/tmp/gonhanh_debug.log"
     if let handle = FileHandle(forWritingAtPath: logPath) {
         handle.seekToEndOfFile()
-        handle.write(logMessage.data(using: .utf8)!)
+        if let data = logMessage.data(using: .utf8) {
+            handle.write(data)
+        }
         handle.closeFile()
     } else {
         FileManager.default.createFile(atPath: logPath, contents: logMessage.data(using: .utf8))
     }
 }
+#else
+@inline(__always)
+func debugLog(_ message: String) {}
+#endif
 
 // MARK: - FFI Result Struct (must match Rust #[repr(C)])
 
@@ -80,9 +87,9 @@ class RustBridge {
         guard let resultPtr = ime_key(keyCode, caps, ctrl) else {
             return nil
         }
+        defer { ime_free(resultPtr) }
 
         let result = resultPtr.pointee
-        ime_free(resultPtr)
 
         // Action: 0=None, 1=Send, 2=Restore
         guard result.action == 1 else {
@@ -303,7 +310,7 @@ private func keyboardCallback(
         // Instead of backspace+type (which can cause "dính chữ"), we:
         // 1. Select text with Shift+Left
         // 2. Type replacement (automatically replaces selection)
-        sendTextReplacement(backspaceCount: backspace, chars: chars, proxy: proxy)
+        sendTextReplacement(backspaceCount: backspace, chars: chars)
 
         // Consume original event
         return nil
@@ -344,29 +351,34 @@ private func needsSelectionWorkaround() -> Bool {
     return false
 }
 
+// MARK: - Key Codes
+
+private enum KeyCode {
+    static let backspace: CGKeyCode = 0x33
+    static let leftArrow: CGKeyCode = 0x7B
+}
+
 // MARK: - Send Keys
 
 /// Smart text replacement - uses different methods based on app type
 /// - Default: Use backspace (works for most apps including Terminal)
 /// - Autocomplete apps (Chrome/Excel): Use Shift+Left selection (fixes "dính chữ")
-private func sendTextReplacement(backspaceCount: Int, chars: [Character], proxy: CGEventTapProxy) {
+private func sendTextReplacement(backspaceCount: Int, chars: [Character]) {
     if needsSelectionWorkaround() {
-        // Chrome/Excel: use selection for atomic replacement
-        sendTextReplacementWithSelection(backspaceCount: backspaceCount, chars: chars, proxy: proxy)
+        sendTextReplacementWithSelection(backspaceCount: backspaceCount, chars: chars)
     } else {
-        // Default: use backspace (works for Terminal, most apps)
-        sendTextReplacementWithBackspace(backspaceCount: backspaceCount, chars: chars, proxy: proxy)
+        sendTextReplacementWithBackspace(backspaceCount: backspaceCount, chars: chars)
     }
 }
 
 /// Terminal-friendly: backspace then type
-private func sendTextReplacementWithBackspace(backspaceCount: Int, chars: [Character], proxy: CGEventTapProxy) {
+private func sendTextReplacementWithBackspace(backspaceCount: Int, chars: [Character]) {
     let source = CGEventSource(stateID: .privateState)
 
     // Send backspaces
     for _ in 0..<backspaceCount {
-        if let down = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true),
-           let up = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false) {
+        if let down = CGEvent(keyboardEventSource: source, virtualKey: KeyCode.backspace, keyDown: true),
+           let up = CGEvent(keyboardEventSource: source, virtualKey: KeyCode.backspace, keyDown: false) {
             down.post(tap: .cgSessionEventTap)
             up.post(tap: .cgSessionEventTap)
         }
@@ -386,14 +398,14 @@ private func sendTextReplacementWithBackspace(backspaceCount: Int, chars: [Chara
 }
 
 /// GUI app-friendly: select then replace (atomic, fixes Chrome/Excel autocomplete)
-private func sendTextReplacementWithSelection(backspaceCount: Int, chars: [Character], proxy: CGEventTapProxy) {
+private func sendTextReplacementWithSelection(backspaceCount: Int, chars: [Character]) {
     let source = CGEventSource(stateID: .privateState)
 
     if backspaceCount > 0 {
         // Select text with Shift+Left Arrow
         for _ in 0..<backspaceCount {
-            if let down = CGEvent(keyboardEventSource: source, virtualKey: 0x7B, keyDown: true),
-               let up = CGEvent(keyboardEventSource: source, virtualKey: 0x7B, keyDown: false) {
+            if let down = CGEvent(keyboardEventSource: source, virtualKey: KeyCode.leftArrow, keyDown: true),
+               let up = CGEvent(keyboardEventSource: source, virtualKey: KeyCode.leftArrow, keyDown: false) {
                 down.flags = .maskShift
                 up.flags = .maskShift
                 down.post(tap: .cgSessionEventTap)

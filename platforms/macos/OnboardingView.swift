@@ -277,10 +277,8 @@ struct PermissionStep: View {
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             let trusted = AXIsProcessTrusted()
             DispatchQueue.main.async {
-                if trusted {
-                    status = .granted
-                    stopAutoCheck()
-                } else if hasRequestedPermission {
+                if trusted && status != .granted {
+                    // Permission granted - show success but require manual restart
                     status = .needsRestart
                 }
             }

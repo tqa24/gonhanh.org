@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Onboarding View (Apple HIG Compliant)
+// MARK: - Onboarding View
 
 struct OnboardingView: View {
     @State private var currentPage = 0
@@ -9,34 +9,33 @@ struct OnboardingView: View {
     @State private var selectedMode: InputMode = .telex
     @State private var permissionTimer: Timer?
 
-    private let totalPages = 3
-
     var body: some View {
         VStack(spacing: 0) {
-            // Content
-            TabView(selection: $currentPage) {
-                WelcomePage()
-                    .tag(0)
-
-                PermissionPage(
-                    hasPermission: hasPermission,
-                    onOpenSettings: openAccessibilitySettings
-                )
-                .tag(1)
-
-                SetupPage(selectedMode: $selectedMode)
-                    .tag(2)
+            // Content area
+            Group {
+                switch currentPage {
+                case 0:
+                    WelcomePage()
+                case 1:
+                    PermissionPage(
+                        hasPermission: hasPermission,
+                        onOpenSettings: openAccessibilitySettings
+                    )
+                case 2:
+                    SetupPage(selectedMode: $selectedMode)
+                default:
+                    EmptyView()
+                }
             }
-            .tabViewStyle(.automatic)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
 
-            // Bottom bar (Apple-style)
+            // Bottom bar
             HStack {
-                // Page indicator
+                // Page indicators
                 HStack(spacing: 8) {
-                    ForEach(0..<totalPages, id: \.self) { index in
+                    ForEach(0..<3, id: \.self) { index in
                         Circle()
                             .fill(index == currentPage ? Color.accentColor : Color.secondary.opacity(0.3))
                             .frame(width: 6, height: 6)
@@ -45,45 +44,53 @@ struct OnboardingView: View {
 
                 Spacer()
 
-                // Navigation buttons
+                // Buttons
                 HStack(spacing: 12) {
                     if currentPage > 0 {
                         Button("Quay lại") {
-                            withAnimation { currentPage -= 1 }
+                            currentPage -= 1
                         }
-                        .keyboardShortcut(.leftArrow, modifiers: [])
                     }
 
-                    if currentPage == 0 {
-                        Button("Tiếp tục") {
-                            withAnimation {
-                                currentPage = hasPermission ? 2 : 1
-                            }
-                        }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
-                    } else if currentPage == 1 {
-                        Button("Khởi động lại") {
-                            restartApp()
-                        }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(!hasPermission)
-                    } else if currentPage == 2 {
-                        Button("Hoàn tất") {
-                            finishOnboarding()
-                        }
-                        .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
-                    }
+                    primaryButton
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
         }
-        .frame(width: 480, height: 440)
+        .frame(width: 480, height: 420)
         .onAppear { startPermissionCheck() }
         .onDisappear { stopPermissionCheck() }
+    }
+
+    @ViewBuilder
+    private var primaryButton: some View {
+        switch currentPage {
+        case 0:
+            Button("Tiếp tục") {
+                currentPage = hasPermission ? 2 : 1
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+
+        case 1:
+            Button("Khởi động lại") {
+                restartApp()
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+            .disabled(!hasPermission)
+
+        case 2:
+            Button("Hoàn tất") {
+                finishOnboarding()
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+
+        default:
+            EmptyView()
+        }
     }
 
     // MARK: - Actions
@@ -138,24 +145,19 @@ private struct WelcomePage: View {
         VStack(spacing: 20) {
             Spacer()
 
-            // App icon (Apple-style large icon)
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 128, height: 128)
+                .frame(width: 100, height: 100)
 
-            // Title
             Text("Chào mừng đến với \(AppMetadata.name)")
                 .font(.system(size: 24, weight: .bold))
 
-            // Description
             Text(AppMetadata.tagline)
                 .font(.body)
                 .foregroundStyle(.secondary)
 
             Spacer()
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(40)
     }
 }
@@ -167,57 +169,38 @@ private struct PermissionPage: View {
     let onOpenSettings: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Spacer()
 
-            // Icon
             Image(systemName: "hand.raised.fill")
-                .font(.system(size: 56))
+                .font(.system(size: 48))
                 .foregroundStyle(.blue)
 
-            // Title
             Text("Cần quyền Accessibility")
                 .font(.system(size: 24, weight: .bold))
 
-            // Description
-            Text("\(AppMetadata.name) cần quyền Accessibility để có thể gõ tiếng Việt trong các ứng dụng.")
+            Text("\(AppMetadata.name) cần quyền Accessibility để gõ tiếng Việt.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 360)
+                .frame(maxWidth: 340)
 
             // Steps
             VStack(alignment: .leading, spacing: 12) {
-                PermissionStep(
-                    number: 1,
-                    text: "Mở System Settings → Privacy & Security → Accessibility",
-                    isComplete: false
-                )
-                PermissionStep(
-                    number: 2,
-                    text: "Bật \(AppMetadata.name) trong danh sách",
-                    isComplete: hasPermission
-                )
-                PermissionStep(
-                    number: 3,
-                    text: "Nhấn \"Khởi động lại\" để áp dụng",
-                    isComplete: false
-                )
+                PermissionStep(number: 1, text: "Mở System Settings → Privacy & Security → Accessibility", isComplete: false)
+                PermissionStep(number: 2, text: "Bật \(AppMetadata.name) trong danh sách", isComplete: hasPermission)
+                PermissionStep(number: 3, text: "Nhấn \"Khởi động lại\" để áp dụng", isComplete: false)
             }
             .padding(.top, 8)
 
-            // Open Settings button
             Button(action: onOpenSettings) {
                 Label("Mở System Settings", systemImage: "gear")
             }
             .buttonStyle(.link)
-            .padding(.top, 4)
 
             Spacer()
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(40)
+        .padding(32)
     }
 }
 
@@ -231,15 +214,15 @@ private struct PermissionStep: View {
             ZStack {
                 Circle()
                     .fill(isComplete ? Color.green : Color.secondary.opacity(0.2))
-                    .frame(width: 22, height: 22)
+                    .frame(width: 24, height: 24)
 
                 if isComplete {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
                 } else {
                     Text("\(number)")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -257,24 +240,20 @@ private struct SetupPage: View {
     @Binding var selectedMode: InputMode
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Spacer()
 
-            // Icon
             Image(systemName: "keyboard")
-                .font(.system(size: 56))
+                .font(.system(size: 48))
                 .foregroundStyle(.blue)
 
-            // Title
             Text("Chọn kiểu gõ")
                 .font(.system(size: 24, weight: .bold))
 
-            // Description
             Text("Bạn có thể thay đổi trong menu bất cứ lúc nào.")
                 .font(.body)
                 .foregroundStyle(.secondary)
 
-            // Mode selection
             VStack(spacing: 8) {
                 ForEach(InputMode.allCases, id: \.rawValue) { mode in
                     ModeOption(
@@ -284,14 +263,12 @@ private struct SetupPage: View {
                     )
                 }
             }
-            .frame(maxWidth: 300)
+            .frame(maxWidth: 280)
             .padding(.top, 8)
 
             Spacer()
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(40)
+        .padding(32)
     }
 }
 

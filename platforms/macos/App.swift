@@ -15,10 +15,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBar: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide dock icon - menu bar app only
-        NSApp.setActivationPolicy(.accessory)
+        // Chỉ ẩn dock icon nếu đã hoàn thành onboarding
+        let hasCompleted = UserDefaults.standard.bool(forKey: SettingsKey.hasCompletedOnboarding)
+        if hasCompleted {
+            NSApp.setActivationPolicy(.accessory)
+        }
 
-        // Setup menu bar
         menuBar = MenuBarController()
     }
 

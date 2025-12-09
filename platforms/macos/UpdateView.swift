@@ -109,68 +109,90 @@ struct UpdateView: View {
     }
 
     private func availableView(_ info: UpdateInfo) -> some View {
-        VStack(spacing: 16) {
-            Spacer()
+        VStack(spacing: 0) {
+            // Header
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.15))
+                        .frame(width: 56, height: 56)
 
-            iconCircle(icon: "arrow.down", color: .blue)
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(Color.accentColor)
+                }
 
-            Text("Có phiên bản mới")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                Text("Có phiên bản mới")
+                    .font(.system(size: 17, weight: .semibold))
 
-            // Version comparison
-            HStack(spacing: 16) {
-                versionBadge(label: "Hiện tại", value: AppMetadata.version)
+                // Version comparison
+                HStack(spacing: 8) {
+                    Text(AppMetadata.version)
+                        .foregroundStyle(.secondary)
 
-                Image(systemName: "arrow.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.tertiary)
 
-                versionBadge(label: "Mới", value: info.version, highlight: true)
+                    Text(info.version)
+                        .foregroundStyle(.green)
+                        .fontWeight(.medium)
+                }
+                .font(.system(size: 13, design: .monospaced))
             }
+            .padding(.top, 28)
+            .padding(.bottom, 20)
 
             // Release notes
-            if !info.releaseNotes.isEmpty {
+            let notes = info.releaseNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !notes.isEmpty {
                 ScrollView {
-                    Text(info.releaseNotes)
-                        .font(.caption)
+                    Text(notes)
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .lineSpacing(3)
                 }
-                .frame(maxHeight: 80)
-                .padding(10)
+                .frame(maxHeight: 100)
+                .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.03))
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.05) : Color.black.opacity(0.03))
                 )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
             }
 
-            Spacer()
-
             // Actions
-            VStack(spacing: 10) {
-                Button("Tải về") {
+            VStack(spacing: 12) {
+                Button {
                     updateManager.downloadUpdate(info)
+                } label: {
+                    Text("Cập nhật ngay")
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
 
-                HStack(spacing: 20) {
+                HStack(spacing: 24) {
                     Button("Để sau") {
                         updateManager.state = .idle
                     }
-                    .foregroundStyle(.secondary)
 
-                    Button("Bỏ qua") {
+                    Button("Bỏ qua phiên bản này") {
                         updateManager.skipVersion(info.version)
                     }
                     .foregroundStyle(.tertiary)
                 }
-                .font(.callout)
+                .font(.system(size: 12))
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
             }
-
-            Spacer()
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 24)
     }
 
     private func downloadingView(_ progress: Double) -> some View {

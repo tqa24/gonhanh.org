@@ -30,8 +30,8 @@ enum UpdateCheckResult {
 class UpdateChecker {
     static let shared = UpdateChecker()
 
-    private let githubAPIURL = "https://api.github.com/repos/khaphanspace/gonhanh.org/releases/latest"
-    private let downloadBaseURL = "https://github.com/khaphanspace/gonhanh.org/releases/latest/download"
+    // Use /releases instead of /releases/latest to get highest version, not most recent publish
+    private let githubAPIURL = "https://api.github.com/repos/khaphanspace/gonhanh.org/releases"
 
     private init() {}
 

@@ -393,6 +393,7 @@ struct SettingsPageView: View {
     @State private var isRecordingShortcut = false
     @State private var selectedShortcutId: UUID?
     @State private var selectedAppId: UUID?
+    @FocusState private var focusedField: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -453,7 +454,8 @@ struct SettingsPageView: View {
                     ForEach($appState.shortcuts) { $shortcut in
                         ShortcutRow(
                             shortcut: $shortcut,
-                            isSelected: selectedShortcutId == shortcut.id
+                            isSelected: selectedShortcutId == shortcut.id,
+                            focusedField: $focusedField
                         ) {
                             selectedShortcutId = shortcut.id
                             selectedAppId = nil
@@ -470,6 +472,7 @@ struct SettingsPageView: View {
                         let newItem = ShortcutItem(key: "", value: "")
                         appState.shortcuts.append(newItem)
                         selectedShortcutId = newItem.id
+                        focusedField = newItem.id  // Focus the new shortcut input
                     },
                     onRemove: {
                         if let id = selectedShortcutId,
@@ -516,9 +519,12 @@ struct SettingsPageView: View {
         }
         .contentShape(Rectangle())
         .onAppear {
-            // Clear any auto-focus on TextFields
-            DispatchQueue.main.async {
-                NSApp.keyWindow?.makeFirstResponder(nil)
+            // Prevent auto-focus on TextFields when settings window opens
+            // Need delay because window may not be ready immediately
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if focusedField == nil {
+                    NSApp.keyWindow?.makeFirstResponder(nil)
+                }
             }
         }
     }
@@ -803,6 +809,7 @@ struct SectionView<Content: View>: View {
 struct ShortcutRow: View {
     @Binding var shortcut: ShortcutItem
     var isSelected: Bool
+    var focusedField: FocusState<UUID?>.Binding
     var onSelect: () -> Void
 
     var body: some View {
@@ -811,6 +818,7 @@ struct ShortcutRow: View {
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .textFieldStyle(.plain)
                 .frame(width: 60)
+                .focused(focusedField, equals: shortcut.id)
             Text("→")
                 .font(.system(size: 11))
                 .foregroundColor(Color(NSColor.tertiaryLabelColor))

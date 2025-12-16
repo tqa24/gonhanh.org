@@ -474,8 +474,9 @@ private func detectMethod() -> (Method, (UInt32, UInt32, UInt32)) {
     if bundleId == "com.microsoft.Excel" { Log.method("sel:excel"); return (.selection, (0, 0, 0)) }
     if bundleId == "com.microsoft.Word" { Log.method("sel:word"); return (.selection, (0, 0, 0)) }
 
-    // Electron apps (Claude Code) - higher delays
+    // Electron apps - higher delays for reliable text replacement
     if bundleId == "com.todesktop.230313mzl4w4u92" { Log.method("slow:claude"); return (.slow, (8000, 15000, 8000)) }
+    if bundleId == "notion.id" { Log.method("slow:notion"); return (.slow, (8000, 15000, 8000)) }
 
     // Terminal apps - conservative delays for reliability
     let terminals = ["com.microsoft.VSCode", "com.apple.Terminal",

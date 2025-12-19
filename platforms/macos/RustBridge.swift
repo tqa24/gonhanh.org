@@ -277,6 +277,7 @@ private struct ImeResult {
 @_silgen_name("ime_esc_restore") private func ime_esc_restore(_ enabled: Bool)
 @_silgen_name("ime_free_tone") private func ime_free_tone(_ enabled: Bool)
 @_silgen_name("ime_modern") private func ime_modern(_ modern: Bool)
+@_silgen_name("ime_english_auto_restore") private func ime_english_auto_restore(_ enabled: Bool)
 @_silgen_name("ime_clear") private func ime_clear()
 @_silgen_name("ime_free") private func ime_free(_ result: UnsafeMutablePointer<ImeResult>?)
 
@@ -350,6 +351,13 @@ class RustBridge {
     static func setModernTone(_ modern: Bool) {
         ime_modern(modern)
         Log.info("Modern tone: \(modern)")
+    }
+
+    /// Set whether to enable English auto-restore (experimental)
+    /// When enabled, automatically restores English words that were transformed
+    static func setEnglishAutoRestore(_ enabled: Bool) {
+        ime_english_auto_restore(enabled)
+        Log.info("English auto-restore: \(enabled)")
     }
 
     static func clearBuffer() { ime_clear() }

@@ -80,6 +80,13 @@ class AppState: ObservableObject {
         }
     }
 
+    @Published var englishAutoRestore: Bool = false {
+        didSet {
+            UserDefaults.standard.set(englishAutoRestore, forKey: SettingsKey.englishAutoRestore)
+            RustBridge.setEnglishAutoRestore(englishAutoRestore)
+        }
+    }
+
     @Published var toggleShortcut: KeyboardShortcut {
         didSet {
             toggleShortcut.save()
@@ -103,6 +110,7 @@ class AppState: ObservableObject {
         loadAutoWShortcut()
         loadEscRestore()
         loadModernTone()
+        loadEnglishAutoRestore()
         loadShortcuts()
         setupObservers()
         setupLaunchAtLoginMonitoring()
@@ -146,6 +154,16 @@ class AppState: ObservableObject {
             modernTone = UserDefaults.standard.bool(forKey: SettingsKey.modernTone)
         }
         RustBridge.setModernTone(modernTone)
+    }
+
+    private func loadEnglishAutoRestore() {
+        if UserDefaults.standard.object(forKey: SettingsKey.englishAutoRestore) == nil {
+            englishAutoRestore = false
+            UserDefaults.standard.set(false, forKey: SettingsKey.englishAutoRestore)
+        } else {
+            englishAutoRestore = UserDefaults.standard.bool(forKey: SettingsKey.englishAutoRestore)
+        }
+        RustBridge.setEnglishAutoRestore(englishAutoRestore)
     }
 
     private func loadShortcuts() {
@@ -600,8 +618,6 @@ struct SettingsPageView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Spacer()
-
             // Launch at Login warning (only show if auto-enable failed)
             if appState.requiresManualLaunchAtLogin {
                 LaunchAtLoginBanner { appState.enableLaunchAtLogin() }
@@ -646,6 +662,16 @@ struct SettingsPageView: View {
             }
             .cardBackground()
 
+            // Experimental features
+            VStack(spacing: 0) {
+                experimentalHeader
+                Divider().padding(.leading, 12)
+                SettingsToggleRow("Tự động khôi phục từ tiếng Anh",
+                                  subtitle: "Tự nhận diện và khôi phục từ tiếng Anh khi gõ sai",
+                                  isOn: $appState.englishAutoRestore)
+            }
+            .cardBackground()
+
             Spacer()
         }
         .sheet(isPresented: $showShortcutsSheet) { ShortcutsSheet(appState: appState) }
@@ -660,6 +686,30 @@ struct SettingsPageView: View {
             }
             .labelsHidden()
             .frame(width: 100)
+        }
+    }
+
+    private var experimentalHeader: some View {
+        SettingsRow {
+            HStack(spacing: 8) {
+                Text("Tính năng thử nghiệm").font(.system(size: 13, weight: .medium))
+                Text("Beta")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.orange))
+            }
+            Spacer()
+            Link(destination: URL(string: "https://github.com/khaphanspace/gonhanh.org/issues/26")!) {
+                HStack(spacing: 4) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                    Text("Góp ý")
+                }
+                .font(.system(size: 11))
+                .foregroundColor(.accentColor)
+            }
+            .buttonStyle(.plain)
         }
     }
 

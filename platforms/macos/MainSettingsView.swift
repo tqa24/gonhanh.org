@@ -618,8 +618,6 @@ struct SettingsPageView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Spacer()
-
             // Launch at Login warning (only show if auto-enable failed)
             if appState.requiresManualLaunchAtLogin {
                 LaunchAtLoginBanner { appState.enableLaunchAtLogin() }

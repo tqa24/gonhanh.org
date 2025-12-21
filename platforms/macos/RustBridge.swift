@@ -37,6 +37,59 @@ private enum KeyCode {
     static let backspace: CGKeyCode = 0x33
     static let forwardDelete: CGKeyCode = 0x75
     static let leftArrow: CGKeyCode = 0x7B
+
+    // Break keys (punctuation, space, arrows, etc.)
+    static let space: CGKeyCode = 49
+    static let tab: CGKeyCode = 48
+    static let returnKey: CGKeyCode = 36
+    static let enter: CGKeyCode = 76
+    static let esc: CGKeyCode = 53
+    static let left: CGKeyCode = 123
+    static let right: CGKeyCode = 124
+    static let down: CGKeyCode = 125
+    static let up: CGKeyCode = 126
+    static let dot: CGKeyCode = 47
+    static let comma: CGKeyCode = 43
+    static let slash: CGKeyCode = 44
+    static let semicolon: CGKeyCode = 41
+    static let quote: CGKeyCode = 39
+    static let lbracket: CGKeyCode = 33
+    static let rbracket: CGKeyCode = 30
+    static let backslash: CGKeyCode = 42
+    static let minus: CGKeyCode = 27
+    static let equal: CGKeyCode = 24
+    static let backquote: CGKeyCode = 50
+
+    // Number keys (shifted = @!#$%^&*())
+    static let n0: CGKeyCode = 29
+    static let n1: CGKeyCode = 18
+    static let n2: CGKeyCode = 19
+    static let n3: CGKeyCode = 20
+    static let n4: CGKeyCode = 21
+    static let n5: CGKeyCode = 23
+    static let n6: CGKeyCode = 22
+    static let n7: CGKeyCode = 26
+    static let n8: CGKeyCode = 28
+    static let n9: CGKeyCode = 25
+}
+
+/// Check if key is a break key (space, punctuation, arrows, etc.)
+/// When shift=true, also treat number keys as break (they produce !@#$%^&*())
+private func isBreakKey(_ keyCode: CGKeyCode, shift: Bool) -> Bool {
+    let standardBreak = [
+        KeyCode.space, KeyCode.tab, KeyCode.returnKey, KeyCode.enter, KeyCode.esc,
+        KeyCode.left, KeyCode.right, KeyCode.up, KeyCode.down,
+        KeyCode.dot, KeyCode.comma, KeyCode.slash, KeyCode.semicolon, KeyCode.quote,
+        KeyCode.lbracket, KeyCode.rbracket, KeyCode.backslash, KeyCode.minus,
+        KeyCode.equal, KeyCode.backquote
+    ].contains(keyCode)
+
+    let shiftedNumber = shift && [
+        KeyCode.n0, KeyCode.n1, KeyCode.n2, KeyCode.n3, KeyCode.n4,
+        KeyCode.n5, KeyCode.n6, KeyCode.n7, KeyCode.n8, KeyCode.n9
+    ].contains(keyCode)
+
+    return standardBreak || shiftedNumber
 }
 
 // MARK: - Injection Method
@@ -428,8 +481,10 @@ class RustBridge {
     }
 
     static func setEnabled(_ enabled: Bool) {
-        ime_enabled(enabled)
-        Log.info("Enabled: \(enabled)")
+        // GATE: Only enable if input source is ABC, always allow disable
+        let actualEnabled = enabled && InputSourceObserver.shared.isAllowedInputSource
+        ime_enabled(actualEnabled)
+        Log.info("Enabled: \(actualEnabled) (requested: \(enabled), allowed: \(InputSourceObserver.shared.isAllowedInputSource))")
     }
 
     /// Set whether to skip w→ư shortcut in Telex mode
@@ -957,6 +1012,12 @@ private func keyboardCallback(
         let str = String(chars)
         Log.transform(bs, str)
         sendReplacement(backspace: bs, chars: chars, method: method, delays: delays, proxy: proxy)
+
+        // If this was a break key (punctuation), pass it through after auto-restore
+        // The engine's auto-restore doesn't include the break character
+        if isBreakKey(keyCode, shift: shift) {
+            return Unmanaged.passUnretained(event)
+        }
         return nil
     }
 

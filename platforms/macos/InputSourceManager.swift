@@ -1,8 +1,21 @@
 import Foundation
 import Carbon.HIToolbox
 
-/// The only input source that allows Gõ Nhanh
-private let allowedInputSource = "com.apple.keylayout.ABC"
+private let kAppleKeyLayoutPrefix = "com.apple.keylayout."
+
+/// Input sources that show V/E icon (Latin-based keyboards)
+private let allowedInputSources: Set<String> = Set([
+    // ABC variants
+    "ABC", "ABC-AZERTY", "ABC-India", "ABC-QWERTZ",
+    // US variants
+    "US", "USExtended", "USInternational-PC",
+    // UK variants
+    "British", "British-PC", "Australian", "Irish", "IrishExtended",
+    // Canadian
+    "Canadian", "Canadian-CSA", "CanadianFrench-PC",
+    // Alternative layouts
+    "Colemak", "Dvorak", "Dvorak-Left", "Dvorak-Right", "DVORAK-QWERTYCMD",
+].map { kAppleKeyLayoutPrefix + $0 })
 
 // MARK: - Input Source Observer
 
@@ -79,7 +92,7 @@ final class InputSourceObserver {
     }
 
     private func isInputSourceAllowed(_ id: String) -> Bool {
-        id == allowedInputSource
+        allowedInputSources.contains(id)
     }
 
     private func getDisplayChar(from source: TISInputSource, id: String) -> String {
@@ -88,15 +101,26 @@ final class InputSourceObserver {
            let langs = Unmanaged<CFArray>.fromOpaque(langsPtr).takeUnretainedValue() as? [String],
            let lang = langs.first {
             switch lang {
+            // East Asian
             case "ja": return "あ"
             case "zh-Hans", "zh-Hant", "zh": return "中"
             case "ko": return "한"
-            case "th": return "ไ"
+            // Southeast Asian (ASEAN)
+            case "th": return "ก"
+            case "km": return "ក"  // Khmer/Cambodian
+            case "lo": return "ກ"  // Lao
+            case "my": return "က"  // Myanmar/Burmese
+            // South Asian
+            case "hi", "mr", "ne", "sa": return "अ"  // Hindi, Marathi, Nepali, Sanskrit
+            case "bn": return "অ"  // Bengali/Bangla
+            case "ta": return "அ"  // Tamil
+            // Other common
             case "vi": return "V"
             case "ru": return "Р"
             case "ar": return "ع"
             case "he": return "א"
             case "el": return "Ω"
+            case "fa", "ur": return "ف"  // Persian, Urdu
             default: break
             }
         }

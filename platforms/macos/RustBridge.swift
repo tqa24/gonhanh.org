@@ -1276,8 +1276,9 @@ private func detectMethod() -> (InjectionMethod, (UInt32, UInt32, UInt32)) {
     if bundleId == "com.microsoft.Word" { Log.method("slow:word"); return (.slow, (3000, 8000, 3000)) }
 
     // Electron apps - higher delays for reliable text replacement
+    // Notion code blocks need extra time for Monaco editor input processing (issue #132)
     if bundleId == "com.todesktop.230313mzl4w4u92" { Log.method("slow:claude"); return (.slow, (8000, 15000, 8000)) }
-    if bundleId == "notion.id" { Log.method("slow:notion"); return (.slow, (8000, 15000, 8000)) }
+    if bundleId == "notion.id" { Log.method("slow:notion"); return (.slow, (12000, 25000, 12000)) }
 
     // Warp terminal - higher delays (modern terminal with complex input processing)
     if bundleId == "dev.warp.Warp-Stable" { Log.method("slow:warp"); return (.slow, (8000, 15000, 8000)) }

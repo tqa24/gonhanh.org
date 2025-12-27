@@ -717,3 +717,46 @@ fn ethnic_minority_place_names_not_restored() {
         ("nawngs ", "nắng "), // nắng - sunny
     ]);
 }
+
+// =============================================================================
+// ISSUE #26 / #142 - UNFIXED BUGS (TEST CASES FOR PENDING FIXES)
+// =============================================================================
+
+/// Issue #26 - @jackblk: "ủa" with pattern "ura" becomes "ura" instead of "ủa"
+/// Hook-tone (r) before vowel 'a' should produce valid Vietnamese "ủa"
+#[test]
+fn issue26_ua_with_hook_tone_before_vowel() {
+    telex_auto_restore(&[
+        ("ura ", "ủa "), // u + r(hỏi) + a → ủa (valid Vietnamese: "oh?/really?")
+        ("uar ", "ủa "), // u + a + r → ủa (standard order)
+    ]);
+}
+
+/// Issue #26 - @npkhang99: "chịu" with pattern "chiuj" becomes "chiju"
+/// When j (nặng) is typed before the final vowel 'u'
+#[test]
+fn issue26_chiu_with_tone_before_final_vowel() {
+    telex_auto_restore(&[
+        ("chiuj ", "chịu "), // ch + i + u + j → chịu (standard order)
+        ("chiju ", "chịu "), // ch + i + j + u → chịu (tone before final vowel)
+    ]);
+}
+
+/// Issue #26 - @jackblk: "thuỷ" with pattern "thury" gets restored
+/// Hook (r) before 'y' should produce valid Vietnamese "thuỷ"
+#[test]
+fn issue26_thuy_with_hook_before_y() {
+    telex_auto_restore(&[
+        ("thuyr ", "thuỷ "), // th + u + y + r → thuỷ (standard: tone after y)
+        ("thury ", "thuỷ "), // th + u + r + y → thuỷ (tone before y - alternative)
+    ]);
+}
+
+/// Issue #142: "sims" becomes "simss" (extra 's' added)
+/// When typing English word "sims", auto-restore adds duplicate 's'
+#[test]
+fn issue142_sims_extra_s() {
+    telex_auto_restore(&[
+        ("sims ", "sims "), // should stay "sims", not "simss" or "sím"
+    ]);
+}

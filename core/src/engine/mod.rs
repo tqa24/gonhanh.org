@@ -3679,10 +3679,25 @@ impl Engine {
                 }
             }
 
+            // Pattern 2c: Consonant + tone modifier at word end → English plural/suffix
+            // Vietnamese tones are placed on vowels, not after consonants
+            // Example: "sims" = S+I+M+S → M(consonant) + S(tone) at end → English plural
+            // Example: "firms" = F+I+R+M+S → M(consonant) + S(tone) at end → English
+            // Counter-example: "sims" should NOT become "sím" (applying tone to vowel)
+            // This catches English plurals and words ending in consonant clusters
+            if i + 1 == self.raw_input.len() && i >= 1 {
+                let (prev_char, _, _) = self.raw_input[i - 1];
+                // If previous char is consonant (not vowel) and modifier at end → English
+                if keys::is_consonant(prev_char) && !keys::is_vowel(prev_char) {
+                    return true;
+                }
+            }
+
             // Pattern 3: Modifier immediately after single vowel, then another vowel
             // AND no initial consonant before the vowel
             // Example: "use" → U (vowel) + S (modifier) + E (vowel) = starts with vowel → English
             // Counter-example: "cura" → C + U + R + A = starts with consonant → Vietnamese "của"
+            // Counter-example: "ura" → U + R + A = Vietnamese "ủa" (interjection: oh?/really?)
             let vowels_before: usize = (0..i)
                 .filter(|&j| keys::is_vowel(self.raw_input[j].0))
                 .count();
@@ -3699,8 +3714,15 @@ impl Engine {
                     let has_initial_consonant = first_vowel_pos > 0
                         && keys::is_consonant(self.raw_input[first_vowel_pos - 1].0);
                     // Only restore if NO initial consonant (pure vowel-start like "use")
+                    // Exception: Valid Vietnamese diphthongs without initial (ủa, ừa, etc.)
                     if !has_initial_consonant {
-                        return true;
+                        // Check for valid Vietnamese diphthong without initial consonant
+                        // U + modifier + A: ủa, ùa, úa, ũa, ụa (interjections)
+                        let first_vowel = self.raw_input[first_vowel_pos].0;
+                        let is_vietnamese_no_initial = first_vowel == keys::U && next_key == keys::A;
+                        if !is_vietnamese_no_initial {
+                            return true;
+                        }
                     }
 
                     // Pattern 4: vowel + modifier + DIFFERENT vowel → English
@@ -3727,9 +3749,12 @@ impl Engine {
                         }
                         // Vietnamese exceptions: diphthongs with tone modifier in middle
                         let is_vietnamese_pattern = match prev_vowel {
-                            k if k == keys::U => next_key == keys::A || next_key == keys::O,
+                            k if k == keys::U => {
+                                // ua: của, mủa; uo: được; uy: thuỷ, quỷ
+                                next_key == keys::A || next_key == keys::O || next_key == keys::Y
+                            }
                             k if k == keys::A => {
-                                // au: màu, náu, cau, lau, etc.
+                                // ai: gái, mái; ay: máy; ao: nào; au: màu, náu
                                 next_key == keys::I
                                     || next_key == keys::Y
                                     || next_key == keys::O
@@ -3737,6 +3762,7 @@ impl Engine {
                             }
                             k if k == keys::O => next_key == keys::I || next_key == keys::A,
                             k if k == keys::E => next_key == keys::O, // eo: đeo, kẹo, mèo
+                            k if k == keys::I => next_key == keys::U, // iu: chịu, nịu, lịu
                             _ => false,
                         };
                         if !is_vietnamese_pattern {

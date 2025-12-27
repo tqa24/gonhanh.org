@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Gorse Recommendation Engine
+  gorse:
+    image: zhenghaoz/gorse-in-one:0.4.15
+    restart: unless-stopped
+    ports:
+      - "8086:8086"  # gRPC port
+      - "8087:8087"  # REST API
+      - "8088:8088"  # Dashboard
+    environment:
+      GORSE_CACHE_STORE: redis://redis:6379
+      GORSE_DATA_STORE: mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse?parseTime=true
+    depends_on:
+      - redis
+      - mysql
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # MySQL for CDP and Gorse data
+  mysql:
+    image: mysql:8
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: personalization
+      MYSQL_USER: gorse
+      MYSQL_PASSWORD: gorse_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init-mysql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  # ClickHouse for analytics (Rybbit uses this)
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.1
+    restart: unless-stopped
+    ports:
+      - "8123:8123"  # HTTP
+      - "9000:9000"  # Native
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+volumes:
+  redis_data:
+  mysql_data:
+  clickhouse_data:

@@ -1,0 +1,18 @@
+# Default configuration for Personalization Engine
+
+environment = "development"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[database]
+clickhouse_url = "http://localhost:8123"
+mysql_url = "mysql://root:password@localhost:3306/personalization"
+
+[redis]
+url = "redis://localhost:6379"
+
+[gorse]
+url = "http://localhost:8087"
+api_key = "your-api-key"

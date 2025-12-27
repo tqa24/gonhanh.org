@@ -3679,17 +3679,34 @@ impl Engine {
                 }
             }
 
-            // Pattern 2c: Consonant + tone modifier at word end → English plural/suffix
-            // Vietnamese tones are placed on vowels, not after consonants
-            // Example: "sims" = S+I+M+S → M(consonant) + S(tone) at end → English plural
-            // Example: "firms" = F+I+R+M+S → M(consonant) + S(tone) at end → English
-            // Counter-example: "sims" should NOT become "sím" (applying tone to vowel)
-            // This catches English plurals and words ending in consonant clusters
-            if i + 1 == self.raw_input.len() && i >= 1 {
-                let (prev_char, _, _) = self.raw_input[i - 1];
-                // If previous char is consonant (not vowel) and modifier at end → English
-                if keys::is_consonant(prev_char) && !keys::is_vowel(prev_char) {
-                    return true;
+            // Pattern 2c: Initial consonant == tone modifier at end → English repetition
+            // This specifically catches words like "sims" where S appears at both start and end
+            // "sims" = S + I + M + S → initial S == final S (tone) → English plural of "sim"
+            // "toms" = T + O + M + S → T ≠ S → could be Vietnamese "tóm", don't trigger
+            // "nhinhr" = N + H + I + N + H + R → N ≠ R → Vietnamese "nhỉnh", don't trigger
+            // Exception: "soos" = S + O + O + S → has Telex doubling OO → Vietnamese "số"
+            if i + 1 == self.raw_input.len() && !self.raw_input.is_empty() {
+                let first_char = self.raw_input[0].0;
+                // If initial consonant is same as final tone modifier → English
+                if keys::is_consonant(first_char) && first_char == key {
+                    // Exception: Check for Telex patterns that indicate Vietnamese diacritics
+                    // 1. Adjacent doubling: AA, EE, OO (circumflex)
+                    // 2. W anywhere with compatible vowel (horn/breve): A+W→ă, U+W→ư, O+W→ơ
+                    let has_adjacent_doubling = self.raw_input.windows(2).any(|w| {
+                        let (c1, _, _) = w[0];
+                        let (c2, _, _) = w[1];
+                        c1 == c2 && (c1 == keys::A || c1 == keys::E || c1 == keys::O)
+                    });
+                    // W can be non-adjacent to vowel: "sapws" = s+a+p+w+s → sắp
+                    let has_w = self.raw_input.iter().any(|(k, _, _)| *k == keys::W);
+                    let has_w_compatible_vowel = self.raw_input.iter().any(|(k, _, _)| {
+                        *k == keys::A || *k == keys::U || *k == keys::O
+                    });
+                    let has_telex_pattern =
+                        has_adjacent_doubling || (has_w && has_w_compatible_vowel);
+                    if !has_telex_pattern {
+                        return true;
+                    }
                 }
             }
 

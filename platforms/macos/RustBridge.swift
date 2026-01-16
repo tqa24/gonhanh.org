@@ -928,9 +928,10 @@ private func matchesToggleShortcut(keyCode: UInt16, flags: CGEventFlags) -> Bool
 }
 
 private func matchesRestoreShortcut(keyCode: UInt16, flags: CGEventFlags) -> Bool {
-    // Check both key+modifier and modifier-only shortcuts
+    // Issue #157: Modifier-only shortcuts (e.g., Shift alone) are handled in flagsChanged,
+    // not here in keyDown. Returning true here would block Shift+A from typing uppercase.
     if currentRestoreShortcut.isModifierOnly {
-        return currentRestoreShortcut.matchesModifierOnly(flags: flags)
+        return false
     }
     return currentRestoreShortcut.matches(keyCode: keyCode, flags: flags)
 }
@@ -1116,9 +1117,10 @@ private func keyboardCallback(
         return Unmanaged.passUnretained(event)
     }
     // Issue #149: Restore shortcut - restore raw ASCII if enabled
+    // Issue #157: Pass key through after restore so it still functions normally (Tab inserts tab, ESC closes dialog)
     if AppState.shared.restoreShortcutEnabled && matchesRestoreShortcut(keyCode: keyCode, flags: flags) {
         triggerRestoreShortcut(flags: flags, proxy: proxy)
-        return nil  // Consume the event so it doesn't propagate
+        return Unmanaged.passUnretained(event)  // Pass key through after restore
     }
 
     // Detect injection method once per keystroke (expensive AX query)

@@ -877,6 +877,7 @@ private func triggerRestoreShortcut(flags: CGEventFlags, proxy: CGEventTapProxy)
     let ctrl = flags.contains(.maskCommand) || flags.contains(.maskControl) || flags.contains(.maskAlternate)
     let (method, delays) = detectMethod()
     if let (bs, chars, _) = RustBridge.processKey(keyCode: UInt16(KeyCode.esc), caps: caps, ctrl: ctrl, shift: shift) {
+        Log.key(UInt16(KeyCode.esc), "restore: bs=\(bs) chars='\(String(chars))'")
         sendReplacement(backspace: bs, chars: chars, method: method, delays: delays, proxy: proxy)
     }
     TextInjector.shared.clearSessionBuffer()
@@ -1030,6 +1031,7 @@ private func keyboardCallback(
         let (method, delays) = detectMethod()
 
         if let (bs, chars, keyConsumed) = RustBridge.processKey(keyCode: keyCode, caps: caps, ctrl: ctrl, shift: shift) {
+            Log.key(keyCode, "enter: bs=\(bs) chars='\(String(chars))' consumed=\(keyConsumed)")
             sendReplacement(backspace: bs, chars: chars, method: method, delays: delays, proxy: proxy)
 
             if bs > 0 || !chars.isEmpty {
@@ -1131,6 +1133,7 @@ private func keyboardCallback(
 
         // First try Rust engine (handles immediate backspace-after-space)
         if let (bs, chars, _) = RustBridge.processKey(keyCode: keyCode, caps: caps, ctrl: ctrl, shift: shift) {
+            Log.key(keyCode, "backspace: bs=\(bs) chars='\(String(chars))'")
             sendReplacement(backspace: bs, chars: chars, method: method, delays: delays, proxy: proxy)
             return nil
         }
@@ -1165,6 +1168,7 @@ private func keyboardCallback(
     }
 
     if let (bs, chars, keyConsumed) = RustBridge.processKey(keyCode: keyCode, caps: caps, ctrl: ctrl, shift: shift) {
+        Log.key(keyCode, "bs=\(bs) chars='\(String(chars))' consumed=\(keyConsumed)")
         sendReplacement(backspace: bs, chars: chars, method: method, delays: delays, proxy: proxy)
 
         // Break keys (punctuation, not space): pass through or post synthetically
@@ -1455,7 +1459,7 @@ private class FocusChangeObserver {
 
     /// Debounce: prevent rapid-fire processing from multiple AX notifications
     private static var lastProcessedTime: CFAbsoluteTime = 0
-    private static let debounceInterval: CFAbsoluteTime = 0.05  // 50ms
+    private static let debounceInterval: CFAbsoluteTime = 0.15  // 150ms
 
     private init() {}
 

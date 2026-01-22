@@ -46,6 +46,10 @@ private enum KeyCode {
     static let rightArrow: CGKeyCode = 0x7C
     static let downArrow: CGKeyCode = 0x7D
     static let upArrow: CGKeyCode = 0x7E
+    static let home: CGKeyCode = 0x73
+    static let end: CGKeyCode = 0x77
+    static let pageUp: CGKeyCode = 0x74
+    static let pageDown: CGKeyCode = 0x79
     static let space: CGKeyCode = 0x31
     static let tab: CGKeyCode = 0x30
     static let returnKey: CGKeyCode = 0x24
@@ -1070,16 +1074,21 @@ private func keyboardCallback(
     }
 
     // Arrow keys with any modifier (Cmd/Option/Shift) that moves cursor - clear buffer
-    // Cmd+Arrow: move by line, Option+Arrow: move by word, Shift+: select
+    // Cmd+Arrow: move by line, Option+Arrow: move by word, Shift+Arrow: select
+    // Also: Shift+Home/End/PageUp/PageDown for text selection (Issue #251)
     // All of these invalidate the current composition context
-    let arrowKeys: Set<UInt16> = [
+    let navigationKeys: Set<UInt16> = [
         UInt16(KeyCode.leftArrow),   // 0x7B
         UInt16(KeyCode.rightArrow),  // 0x7C
         UInt16(KeyCode.upArrow),     // 0x7E
         UInt16(KeyCode.downArrow),   // 0x7D
+        UInt16(KeyCode.home),        // 0x73
+        UInt16(KeyCode.end),         // 0x77
+        UInt16(KeyCode.pageUp),      // 0x74
+        UInt16(KeyCode.pageDown),    // 0x79
     ]
     let hasModifier = flags.contains(.maskCommand) || flags.contains(.maskAlternate) || flags.contains(.maskShift)
-    if arrowKeys.contains(keyCode) && hasModifier {
+    if navigationKeys.contains(keyCode) && hasModifier {
         RustBridge.clearBuffer()
         TextInjector.shared.clearSessionBuffer()
         return Unmanaged.passUnretained(event)

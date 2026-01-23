@@ -73,7 +73,7 @@ Những người đã đóng góp code, biến ý tưởng thành hiện thực.
       <a href="https://github.com/khaphanspace">
         <img src="https://avatars.githubusercontent.com/u/16458012?v=4" width="80" style="border-radius:50%"/><br/>
         <b>khaphanspace</b>
-      </a><br/><sub>908 commits</sub>
+      </a><br/><sub>910 commits</sub>
     </td>
     <td align="center">
       <a href="https://github.com/tuananhht94">
@@ -237,6 +237,12 @@ Những người đã báo lỗi, góp ý, và thảo luận giúp định hình
   </tr>
   <tr>
     <td align="center">
+      <a href="https://github.com/Sunsilkk">
+        <img src="https://avatars.githubusercontent.com/u/94736191?v=4" width="50" style="border-radius:50%"/><br/>
+        <b>Sunsilkk</b>
+      </a>
+    </td>
+    <td align="center">
       <a href="https://github.com/PhucHuwu">
         <img src="https://avatars.githubusercontent.com/u/142735617?v=4" width="50" style="border-radius:50%"/><br/>
         <b>PhucHuwu</b>
@@ -266,14 +272,14 @@ Những người đã báo lỗi, góp ý, và thảo luận giúp định hình
         <b>nguyencaokyvn</b>
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://github.com/tidusvn05">
         <img src="https://avatars.githubusercontent.com/u/2610894?v=4" width="50" style="border-radius:50%"/><br/>
         <b>tidusvn05</b>
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/ssinoying">
         <img src="https://avatars.githubusercontent.com/u/82867068?v=4" width="50" style="border-radius:50%"/><br/>
@@ -304,18 +310,12 @@ Những người đã báo lỗi, góp ý, và thảo luận giúp định hình
         <b>baokhanhnguyen</b>
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://github.com/kimnh-0823">
         <img src="https://avatars.githubusercontent.com/u/49636247?v=4" width="50" style="border-radius:50%"/><br/>
         <b>kimnh-0823</b>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/Sunsilkk">
-        <img src="https://avatars.githubusercontent.com/u/94736191?v=4" width="50" style="border-radius:50%"/><br/>
-        <b>Sunsilkk</b>
       </a>
     </td>
     <td align="center">

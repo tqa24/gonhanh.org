@@ -903,7 +903,10 @@ fn modifiers_at_end_patterns() {
         }
     }
 
-    println!("\n=== Modifiers at End ===\nPassed: {}\nFailed: {}", passed, failed);
+    println!(
+        "\n=== Modifiers at End ===\nPassed: {}\nFailed: {}",
+        passed, failed
+    );
     // Note: Some patterns may not work depending on engine implementation
     // This test documents expected behavior
 }

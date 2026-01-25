@@ -275,8 +275,8 @@ fn generate_english_telex_patterns() {
         })
         .collect();
 
-    let mut output =
-        std::fs::File::create("tests/data/english_100k_typing_variants.txt").expect("Failed to create");
+    let mut output = std::fs::File::create("tests/data/english_100k_typing_variants.txt")
+        .expect("Failed to create");
 
     writeln!(output, "# English 100k Typing Variants").unwrap();
     writeln!(output, "# Format: word TAB variant1,variant2,...").unwrap();
@@ -385,15 +385,29 @@ fn test_english_telex_patterns_restore() {
 
     println!("\n=== ENGLISH TELEX PATTERNS TEST ===\n");
     println!("Total variants tested: {}", total);
-    println!("Auto-restored to English: {} ({:.1}%)", restored, restored as f64 / total as f64 * 100.0);
-    println!("Failed (kept as VN): {} ({:.1}%)", failures.len(), failures.len() as f64 / total as f64 * 100.0);
+    println!(
+        "Auto-restored to English: {} ({:.1}%)",
+        restored,
+        restored as f64 / total as f64 * 100.0
+    );
+    println!(
+        "Failed (kept as VN): {} ({:.1}%)",
+        failures.len(),
+        failures.len() as f64 / total as f64 * 100.0
+    );
 
     if !failures.is_empty() {
         println!("\n=== FAILURES (first 30) ===\n");
-        println!("{:<15} {:<12} {:<12} {:<12}", "INPUT", "EXPECTED", "ACTUAL", "BUFFER");
+        println!(
+            "{:<15} {:<12} {:<12} {:<12}",
+            "INPUT", "EXPECTED", "ACTUAL", "BUFFER"
+        );
         println!("{}", "-".repeat(55));
         for (input, expected, actual, buffer) in failures.iter().take(30) {
-            println!("{:<15} {:<12} {:<12} {:<12}", input, expected, actual, buffer);
+            println!(
+                "{:<15} {:<12} {:<12} {:<12}",
+                input, expected, actual, buffer
+            );
         }
 
         // Write failures to file
@@ -417,8 +431,10 @@ fn test_english_telex_patterns_restore() {
     }
 
     // Count by pattern
-    let mut by_pattern_restored: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
-    let mut by_pattern_kept: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut by_pattern_restored: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    let mut by_pattern_kept: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
 
     for line in content.lines() {
         let line = line.trim();
@@ -464,13 +480,17 @@ fn test_specific_english_telex_words() {
     engine.set_english_auto_restore(true);
 
     // Words with oo pattern (most should restore - invalid VN ending)
-    let oo_words = ["book", "good", "food", "look", "took", "cool", "pool", "tool"];
+    let oo_words = [
+        "book", "good", "food", "look", "took", "cool", "pool", "tool",
+    ];
 
     // Words with ee pattern (some valid VN like sê, bê, etc.)
     let ee_words = ["see", "bee", "fee", "tree", "free", "keep", "deep", "seek"];
 
     // Words with aw pattern (many valid VN like lắ, etc.)
-    let aw_words = ["law", "saw", "raw", "draw", "straw", "crawl", "dawn", "lawn"];
+    let aw_words = [
+        "law", "saw", "raw", "draw", "straw", "crawl", "dawn", "lawn",
+    ];
 
     // Words with ow pattern (many valid VN like lơ, bơ, etc.)
     let ow_words = ["low", "bow", "row", "show", "know", "flow", "grow", "slow"];

@@ -39,10 +39,10 @@ fn has_vowel_pattern(word: &str) -> bool {
 /// Categorize failure cause
 #[derive(Debug, Clone, PartialEq)]
 enum FailureCause {
-    Tone,       // Tone marker caused transform
-    Vowel,      // Vowel pattern caused transform
-    Both,       // Both tone and vowel patterns
-    Unknown,    // Neither (shouldn't happen often)
+    Tone,    // Tone marker caused transform
+    Vowel,   // Vowel pattern caused transform
+    Both,    // Both tone and vowel patterns
+    Unknown, // Neither (shouldn't happen often)
 }
 
 fn categorize_failure(word: &str) -> FailureCause {
@@ -195,7 +195,8 @@ fn english_100k_failures() {
         }
     }
 
-    let total_failures = tone_failures.len() + vowel_failures.len() + both_failures.len() + unknown_failures.len();
+    let total_failures =
+        tone_failures.len() + vowel_failures.len() + both_failures.len() + unknown_failures.len();
 
     // Print summary table
     let pass_rate = (words.len() - total_failures) as f64 / words.len() as f64 * 100.0;
@@ -239,7 +240,13 @@ fn english_100k_failures() {
         writeln!(f, "# English 100k Failures - Tone Markers").ok();
         writeln!(f, "# Cause: words ending with s/f/r/x/j trigger tone marks").ok();
         writeln!(f, "# Format: WORD \\t ACTUAL \\t BUFFER").ok();
-        writeln!(f, "# Total: {} (+ {} both)", tone_failures.len(), both_failures.len()).ok();
+        writeln!(
+            f,
+            "# Total: {} (+ {} both)",
+            tone_failures.len(),
+            both_failures.len()
+        )
+        .ok();
         writeln!(f, "#").ok();
         writeln!(f, "# WORD: English word typed").ok();
         writeln!(f, "# ACTUAL: engine output after space").ok();
@@ -258,7 +265,13 @@ fn english_100k_failures() {
         writeln!(f, "# English 100k Failures - Vowel Patterns").ok();
         writeln!(f, "# Cause: aa/ee/oo/aw/ow/uw/dd trigger vowel transforms").ok();
         writeln!(f, "# Format: WORD \\t ACTUAL \\t BUFFER").ok();
-        writeln!(f, "# Total: {} (+ {} both)", vowel_failures.len(), both_failures.len()).ok();
+        writeln!(
+            f,
+            "# Total: {} (+ {} both)",
+            vowel_failures.len(),
+            both_failures.len()
+        )
+        .ok();
         writeln!(f, "#").ok();
         writeln!(f, "# WORD: English word typed").ok();
         writeln!(f, "# ACTUAL: engine output after space").ok();

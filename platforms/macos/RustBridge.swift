@@ -1418,7 +1418,7 @@ private func detectMethod() -> (InjectionMethod, (UInt32, UInt32, UInt32)) {
 
     // Helper to cache and return result (only logs when method+app changes)
     func cached(_ m: InjectionMethod, _ d: (UInt32, UInt32, UInt32), _ methodName: String) -> (InjectionMethod, (UInt32, UInt32, UInt32)) {
-        let logKey = "\(methodName) [\(bundleId)]"
+        let logKey = "\(methodName) [\(bundleId)] role=\(role ?? "nil")"
         DetectionCache.set(m, d, logKey: logKey); return (m, d)
     }
 

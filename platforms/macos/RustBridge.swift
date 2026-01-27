@@ -242,7 +242,12 @@ private class TextInjector {
     /// Standard backspace injection: delete N chars, then type replacement
     /// Set charByChar=true for character-by-character mode (slower but more reliable for some apps like Safari Google Docs)
     private func injectViaBackspace(bs: Int, text: String, delays: (UInt32, UInt32, UInt32), charByChar: Bool = false) {
-        guard let src = CGEventSource(stateID: .privateState) else { return }
+        guard let src = CGEventSource(stateID: .privateState) else {
+            Log.info("inject FAILED: no event source")
+            return
+        }
+
+        let startTime = CFAbsoluteTimeGetCurrent()
 
         for _ in 0..<bs {
             postKey(KeyCode.backspace, source: src)
@@ -250,7 +255,13 @@ private class TextInjector {
         }
         if bs > 0 { usleep(delays.1) }
 
-        postText(text, source: src, delay: delays.2, chunkSize: charByChar ? 1 : 20)
+        let chunks = postText(text, source: src, delay: delays.2, chunkSize: charByChar ? 1 : 20)
+
+        let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000  // ms
+        let expected = Double(bs) * Double(delays.0) / 1000 +
+                       (bs > 0 ? Double(delays.1) / 1000 : 0) +
+                       Double(chunks) * Double(delays.2) / 1000
+        Log.info("inject done: bs=\(bs) chunks=\(chunks) time=\(String(format: "%.1f", elapsed))ms expect=\(String(format: "%.1f", expected))ms")
     }
 
     /// Selection injection: Shift+Left to select, then type replacement (for browser address bars)
@@ -445,16 +456,23 @@ private class TextInjector {
 
     /// Post text in chunks (CGEvent has 20-char limit)
     /// Set chunkSize=1 for character-by-character mode (slower but more reliable for some apps)
-    private func postText(_ text: String, source: CGEventSource, delay: UInt32 = 0, proxy: CGEventTapProxy? = nil, chunkSize: Int = 20) {
+    /// Returns number of chunks posted
+    @discardableResult
+    private func postText(_ text: String, source: CGEventSource, delay: UInt32 = 0, proxy: CGEventTapProxy? = nil, chunkSize: Int = 20) -> Int {
         let utf16 = Array(text.utf16)
         var offset = 0
+        var chunkNum = 0
 
         while offset < utf16.count {
             let end = min(offset + chunkSize, utf16.count)
             let chunk = Array(utf16[offset..<end])
+            chunkNum += 1
 
             guard let dn = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
-                  let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false) else { break }
+                  let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false) else {
+                Log.info("postText FAILED: chunk \(chunkNum)")
+                break
+            }
             dn.setIntegerValueField(.eventSourceUserData, value: kEventMarker)
             up.setIntegerValueField(.eventSourceUserData, value: kEventMarker)
             dn.keyboardSetUnicodeString(stringLength: chunk.count, unicodeString: chunk)
@@ -470,6 +488,7 @@ private class TextInjector {
             if delay > 0 { usleep(delay) }
             offset = end
         }
+        return chunkNum
     }
 }
 
@@ -843,11 +862,22 @@ private func getWordToRestoreOnBackspace() -> String? {
     return (hasVietnameseDiacritics || isPureASCIILetters) ? word : nil
 }
 
+private extension CGEvent {
+    /// Get the character from a keyboard event
+    func keyboardCharacter() -> Character? {
+        var length = 0
+        var chars = [UniChar](repeating: 0, count: 4)
+        keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &length, unicodeString: &chars)
+        guard length > 0 else { return nil }
+        return String(utf16CodeUnits: chars, count: length).first
+    }
+}
+
 private extension CGEventFlags {
     var modifierCount: Int {
         [contains(.maskSecondaryFn), contains(.maskControl), contains(.maskAlternate), contains(.maskShift), contains(.maskCommand)].filter { $0 }.count
     }
-    
+
     /// Check if only fn key is pressed (no other modifiers)
     var isFnOnly: Bool {
         contains(.maskSecondaryFn) && 
@@ -1052,6 +1082,13 @@ private func keyboardCallback(
     }
 
     let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+
+    // Log all keystrokes (before any processing)
+    if let char = event.keyboardCharacter() {
+        Log.info("keyDown: code=\(keyCode) char='\(char)'")
+    } else {
+        Log.info("keyDown: code=\(keyCode)")
+    }
 
     // Custom shortcut to toggle Vietnamese (default: Ctrl+Space)
     if matchesToggleShortcut(keyCode: keyCode, flags: flags) {
@@ -1488,6 +1525,9 @@ private func detectMethod() -> (InjectionMethod, (UInt32, UInt32, UInt32)) {
         "dev.zed.Zed", "com.sublimetext.4", "com.sublimetext.3", "com.panic.Nova"
     ]
     if codeApps.contains(bundleId) { return cached(.slow, (8000, 25000, 8000), "slow:code") }
+
+    // LaTeX editors (Qt-based) - need charByChar for reliable Unicode input
+    if bundleId == "texstudio" { return cached(.charByChar, (3000, 8000, 3000), "char:texstudio") }
     if bundleId.hasPrefix("com.jetbrains") { return cached(.slow, (8000, 25000, 8000), "slow:jb") }
 
     // Default: safe delays
@@ -1496,6 +1536,7 @@ private func detectMethod() -> (InjectionMethod, (UInt32, UInt32, UInt32)) {
 
 private func sendReplacement(backspace bs: Int, chars: [Character], method: InjectionMethod, delays: (UInt32, UInt32, UInt32), proxy: CGEventTapProxy) {
     let str = String(chars)
+    Log.info("inject: bs=\(bs) text='\(str)' method=\(method) delays=\(delays)")
 
     // Use TextInjector for synchronized text injection
     TextInjector.shared.injectSync(bs: bs, text: str, method: method, delays: delays, proxy: proxy)

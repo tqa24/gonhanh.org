@@ -15,7 +15,43 @@ Mỗi đóng góp, dù lớn hay nhỏ, đều giúp người Việt gõ tiếng
 Những người đã tin tưởng và ủng hộ dự án.
 
 
+### 🥇 Gold
 
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/blueberry6401">
+        <img src="https://avatars.githubusercontent.com/u/7337535?u=465b15011bab7c2bb58c6a5b96be55fee8f9c858&v=4" width="100" style="border-radius:50%"/><br/>
+        <b>blueberry6401</b> 🥇
+      </a>
+    </td>
+  </tr>
+</table>
+
+### 🥈 Silver
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/nguyencaokyvn">
+        <img src="https://avatars.githubusercontent.com/u/2754877?u=b4cf2da20034865ba9deda9458024215f0d7b39f&v=4" width="80" style="border-radius:50%"/><br/>
+        <b>nguyencaokyvn</b> 🥈
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/trinhquocviet">
+        <img src="https://avatars.githubusercontent.com/u/9828732?u=c195635111d2e5ad1f65447882db16d487773225&v=4" width="80" style="border-radius:50%"/><br/>
+        <b>trinhquocviet</b> 🥈
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/vienkmt">
+        <img src="https://avatars.githubusercontent.com/u/20434534?u=12a0117494ef54992f329b8a943036622d5c0f17&v=4" width="80" style="border-radius:50%"/><br/>
+        <b>vienkmt</b> 🥈
+      </a>
+    </td>
+  </tr>
+</table>
 
 ### 💜 Backers
 
@@ -25,30 +61,6 @@ Những người đã tin tưởng và ủng hộ dự án.
       <a href="https://github.com/ducfilan">
         <img src="https://avatars.githubusercontent.com/u/1677524?u=b6af07b085067d01331688a03b6822c4761cd59f&v=4" width="50" style="border-radius:50%"/><br/>
         <b>ducfilan</b> 💜
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/nguyencaokyvn">
-        <img src="https://avatars.githubusercontent.com/u/2754877?u=b4cf2da20034865ba9deda9458024215f0d7b39f&v=4" width="50" style="border-radius:50%"/><br/>
-        <b>nguyencaokyvn</b> 💜
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/blueberry6401">
-        <img src="https://avatars.githubusercontent.com/u/7337535?u=465b15011bab7c2bb58c6a5b96be55fee8f9c858&v=4" width="50" style="border-radius:50%"/><br/>
-        <b>blueberry6401</b> 💜
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/trinhquocviet">
-        <img src="https://avatars.githubusercontent.com/u/9828732?u=c195635111d2e5ad1f65447882db16d487773225&v=4" width="50" style="border-radius:50%"/><br/>
-        <b>trinhquocviet</b> 💜
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/vienkmt">
-        <img src="https://avatars.githubusercontent.com/u/20434534?u=12a0117494ef54992f329b8a943036622d5c0f17&v=4" width="50" style="border-radius:50%"/><br/>
-        <b>vienkmt</b> 💜
       </a>
     </td>
     <td align="center">
